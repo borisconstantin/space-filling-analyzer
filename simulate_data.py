@@ -17,11 +17,10 @@ SEED = 42
 
 class Sampling:
 
-    def __init__(self, minmax_space_constraints=None, mixture_len_constraints=None, total_weight=100, md_credentials_file=None, desc_dict=None):
+    def __init__(self, minmax_space_constraints=None, mixture_len_constraints=None, total_weight=100, desc_dict=None):
         self.minmax_space_constraints = minmax_space_constraints
         self.mixture_len_constraints = mixture_len_constraints
         self.total_weight = total_weight
-        self.md_credentials_file = md_credentials_file
         self.desc_dict = desc_dict
         self.rm_desc_dict = {key:val for key, val in self.desc_dict.items() if val['type']=='Material'}
         self.variable_val_desc_dict = {key: val for key, val in self.desc_dict.items() if val['Min'] != val['Max']}
@@ -112,7 +111,7 @@ class Sampling:
         return rg_samples_df.round(2)
 
     @staticmethod
-    def get_mixture_design(m, credentials_file):
+    def get_mixture_design(m):
         def get_ssh_config(file_path):
             config = {}
             with open(file_path, 'r') as config_file:
@@ -121,10 +120,10 @@ class Sampling:
                     key, value = line.strip().split('=')
                     config[key] = value
             return config
-        config = get_ssh_config(credentials_file)
-        hostname = config['hostname']
-        username = config['username']
-        password = config['password']
+        config = get_ssh_config()
+        hostname = st.secrets['hostname']
+        username = st.secrets['username']
+        password = st.secrets['password']
         transport = paramiko.Transport(hostname)
         transport.connect(username=username, password=password)
         sftp = paramiko.SFTPClient.from_transport(transport)
@@ -160,8 +159,8 @@ class Sampling:
         except ValueError:
             return a
 
-    def mixture_design_samples(self, credentials_file, constraints, sample_size):
-        md_samples = self.get_mixture_design(len(self.md_rm_cols), credentials_file)
+    def mixture_design_samples(self, constraints, sample_size):
+        md_samples = self.get_mixture_design(len(self.md_rm_cols))
         if md_samples is None:
             md_samples = pd.DataFrame(columns=self.md_rm_cols)
             warnings.warn("'no mixture_design samples found'")
@@ -176,7 +175,7 @@ class Sampling:
             for constraint in equal_constraints:
                 constraint_cols = [col for col in md_samples.columns if col in constraint]
                 constraint_number = self.convert_to_best_numeric_type(constraint.split('==')[-1])
-                md_samples_sous_plan1_normalized = self.get_mixture_design(len(constraint_cols), credentials_file)
+                md_samples_sous_plan1_normalized = self.get_mixture_design(len(constraint_cols))
                 if md_samples_sous_plan1_normalized is None:
                     pass
                 else:
@@ -254,7 +253,7 @@ class Sampling:
     def collapse_data(self):
         lh_samples = self.latin_hypercube_samples(sample_size=LH_SAMPLES_SIZE, constraints=self.minmax_space_constraints)
         lc_samples = self.level_combinations_samples(sample_size=LC_SAMPLES_SIZE, total_weight=self.total_weight, levels=self.combinations_levels)
-        md_samples = self.mixture_design_samples(sample_size=MD_SAMPLES_SIZE, credentials_file=self.md_credentials_file, constraints=self.mixture_len_constraints)
+        md_samples = self.mixture_design_samples(sample_size=MD_SAMPLES_SIZE, constraints=self.mixture_len_constraints)
         for col in lh_samples.columns:
             if col not in md_samples.columns:
                 md_samples[col] = lh_samples[col]
