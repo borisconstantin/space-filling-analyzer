@@ -112,15 +112,6 @@ class Sampling:
 
     @staticmethod
     def get_mixture_design(m):
-        def get_ssh_config(file_path):
-            config = {}
-            with open(file_path, 'r') as config_file:
-                # Lire chaque ligne et séparer la clé et la valeur
-                for line in config_file:
-                    key, value = line.strip().split('=')
-                    config[key] = value
-            return config
-        config = get_ssh_config()
         hostname = st.secrets['hostname']
         username = st.secrets['username']
         password = st.secrets['password']
