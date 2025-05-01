@@ -14,7 +14,6 @@ filterwarnings("ignore")
 
 INFLOWS_LOGO_PATH = "images/InFLOWS-logo-white_font-1-1024x458.png"
 DATA_FORMAT_EXAMPLE_PATH = "data_format_example.xlsx"
-CREDENTIALS_FILE_PATH = "secrets/my_credentials.txt"
 RUNS_COUNT_FILE_PATH = "runs_count.txt"
 
 def get_df_from_uploaded_file(file) -> pd.DataFrame :
@@ -153,7 +152,6 @@ if compute_coverage_btn :
     data_sampler = Sampling(minmax_space_constraints=minmax_space_constraint,
                             mixture_len_constraints=mixture_len_constraint,
                             total_weight=total_weight,
-                            md_credentials_file=CREDENTIALS_FILE_PATH,
                             desc_dict=desc_dict)
     simulated_df = data_sampler.get_samples()
     simulated_df.drop(ui_masked_cols, axis=1, inplace=True)
